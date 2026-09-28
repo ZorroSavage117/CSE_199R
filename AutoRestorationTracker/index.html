@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f2ed">
+  <title>Auto Restoration Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f3f2ed;
+      --surface: #fffefa;
+      --ink: #202722;
+      --muted: #777c73;
+      --line: #e4e3dc;
+      --green: #315b49;
+      --green-soft: #e8eee8;
+      --orange: #bd613f;
+      --orange-soft: #f5e9e2;
+      --blue: #587c87;
+      --blue-soft: #e8eff0;
+      --yellow: #e2bd6a;
+      --mono: "DM Mono", "Courier New", monospace;
+      --sans: "Manrope", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input { font: inherit; }
+
+    button { color: inherit; }
+
+    .app-shell {
+      width: min(1440px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 228px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      padding: 27px 18px 22px;
+      background: #e9e9e1;
+      border-right: 1px solid #ddded5;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0 8px;
+      color: var(--ink);
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 9px;
+      background: var(--green);
+      color: white;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .brand-name { font-size: 14px; font-weight: 800; letter-spacing: .1px; }
+    .brand-caption { margin-top: 2px; color: var(--muted); font: 10px var(--mono); }
+
+    .side-label {
+      margin: 43px 9px 12px;
+      color: #85877f;
+      font: 10px var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .nav-list { display: grid; gap: 4px; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 41px;
+      padding: 0 11px;
+      border-radius: 6px;
+      color: #62685f;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .nav-item.active { background: var(--surface); color: var(--green); box-shadow: 0 1px 2px #2027220d; }
+    .nav-icon { width: 17px; text-align: center; font-size: 15px; }
+    .nav-count { margin-left: auto; color: #92958b; font: 10px var(--mono); }
+
+    .sidebar-bottom { margin-top: auto; }
+
+    .garage-note {
+      margin: 0 2px 17px;
+      padding: 14px;
+      border: 1px solid #d9dbd1;
+      border-radius: 6px;
+      background: #f0f0e9;
+    }
+
+    .garage-note strong { display: block; margin-bottom: 5px; font-size: 11px; }
+    .garage-note p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+
+    .main { min-width: 0; padding: 0 42px 36px; }
+
+    .topbar {
+      display: flex;
+      min-height: 72px;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .breadcrumbs { color: var(--muted); font-size: 11px; }
+    .breadcrumbs strong { color: var(--ink); font-weight: 700; }
+    .topbar-right { display: flex; align-items: center; gap: 18px; }
+    .date-label { color: var(--muted); font: 10px var(--mono); }
+
+    .avatar {
+      display: grid;
+      width: 31px;
+      height: 31px;
+      place-items: center;
+      border: 1px solid #d6d8cf;
+      border-radius: 50%;
+      background: #e5ebe3;
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .page-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 29px 0 20px;
+    }
+
+    .eyebrow { margin: 0 0 7px; color: var(--orange); font: 10px var(--mono); letter-spacing: .7px; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(23px, 3vw, 30px); line-height: 1.15; letter-spacing: -.8px; }
+    .subtitle { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+
+    .button {
+      display: inline-flex;
+      min-height: 37px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 13px;
+      border: 1px solid var(--green);
+      border-radius: 5px;
+      background: var(--green);
+      color: white;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .button:hover { background: #244635; }
+    .button:focus-visible, input:focus-visible { outline: 3px solid #81a28c; outline-offset: 2px; }
+
+    .vehicle-panel {
+      display: grid;
+      min-height: 213px;
+      grid-template-columns: minmax(0, 1fr) 39%;
+      overflow: hidden;
+      border: 1px solid #dedfd7;
+      border-radius: 7px;
+      background: var(--surface);
+      animation: enter .45s ease-out both;
+    }
+
+    .vehicle-info { padding: 23px 25px; }
+    .vehicle-tag { display: flex; align-items: center; gap: 8px; color: var(--green); font: 10px var(--mono); text-transform: uppercase; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #6c9a72; }
+    h2.vehicle-name { margin: 13px 0 4px; font-size: 25px; letter-spacing: -.7px; }
+    .vehicle-meta { margin: 0; color: var(--muted); font-size: 11px; }
+
+    .progress-block { margin-top: 25px; }
+    .progress-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 10px; }
+    .progress-top span:first-child { color: #666d64; }
+    .progress-top strong { color: var(--green); font: 11px var(--mono); }
+    .progress-track { height: 6px; overflow: hidden; border-radius: 4px; background: #e9eae3; }
+    .progress-fill { width: 38%; height: 100%; border-radius: inherit; background: var(--green); transition: width .25s ease; }
+    .vehicle-photo { min-height: 213px; background: #41443c; }
+    .vehicle-photo img { display: block; width: 100%; height: 100%; min-height: 213px; object-fit: cover; object-position: center 57%; }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin: 15px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+    }
+
+    .metric { min-width: 0; padding: 15px 17px 14px; }
+    .metric + .metric { border-left: 1px solid var(--line); }
+    .metric-label { color: var(--muted); font-size: 10px; }
+    .metric-value { margin-top: 6px; font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
+    .metric-detail { margin-top: 3px; color: #84887f; font-size: 9px; }
+
+    .content-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr); gap: 16px; }
+    .panel { min-width: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+    .panel-heading { display: flex; min-height: 57px; align-items: center; justify-content: space-between; gap: 12px; padding: 0 17px; border-bottom: 1px solid var(--line); }
+    .panel-title { margin: 0; font-size: 12px; font-weight: 800; }
+    .panel-subtitle { margin: 3px 0 0; color: var(--muted); font-size: 9px; }
+    .text-link { border: 0; background: transparent; color: var(--green); cursor: pointer; font-size: 10px; font-weight: 800; text-decoration: none; }
+
+    .stage-list { padding: 3px 17px 7px; }
+    .stage-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 49px; border-bottom: 1px solid #efefe9; }
+    .stage-row:last-child { border-bottom: 0; }
+    .stage-marker { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid #d9ddd4; border-radius: 50%; color: #92978e; font: 9px var(--mono); }
+    .stage-row.done .stage-marker { border-color: #cbd9cb; background: var(--green-soft); color: var(--green); }
+    .stage-row.current .stage-marker { border-color: var(--orange); color: var(--orange); box-shadow: 0 0 0 3px var(--orange-soft); }
+    .stage-name { font-size: 10px; font-weight: 700; }
+    .stage-note { margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .stage-state { color: #8b9087; font: 9px var(--mono); }
+    .stage-row.current .stage-state { color: var(--orange); }
+
+    .parts-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .parts-table th { padding: 11px 14px 9px; color: #8a8e85; font: 9px var(--mono); font-weight: 400; text-transform: uppercase; }
+    .parts-table td { padding: 11px 14px; border-top: 1px solid #efefe9; font-size: 10px; }
+    .parts-table td:last-child, .parts-table th:last-child { text-align: right; }
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+    .data-note strong { color: var(--ink); font-size: 9px; }
+    .data-schema { color: var(--green); font: 9px var(--mono); text-align: right; }
+
+    @keyframes enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 1000px) {
+      .main { padding-right: 25px; padding-left: 25px; }
+      .app-shell { grid-template-columns: 190px minmax(0, 1fr); }
+      .content-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    @media (max-width: 680px) {
+      .app-shell { display: block; }
+      .sidebar { display: block; padding: 13px 16px 0; border-right: 0; border-bottom: 1px solid #ddded5; }
+      .brand { width: fit-content; }
+      .side-label, .sidebar-bottom { display: none; }
+      .nav-list { display: flex; gap: 3px; margin-top: 12px; overflow-x: auto; }
+      .nav-item { min-height: 37px; flex: 0 0 auto; padding: 0 10px; font-size: 10px; }
+      .nav-count { display: none; }
+      .nav-icon { display: none; }
+      .main { padding: 0 16px 26px; }
+      .topbar { min-height: 53px; }
+      .date-label { display: none; }
+      .page-heading { align-items: start; padding-top: 22px; }
+      .page-heading .button { width: 38px; min-width: 38px; padding: 0; font-size: 0; }
+      .page-heading .button span { font-size: 18px; }
+      .vehicle-panel { grid-template-columns: 1fr; }
+      .vehicle-info { padding: 20px; }
+      .vehicle-photo { min-height: 155px; max-height: 185px; }
+      .vehicle-photo img { min-height: 155px; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .metric { padding: 13px 14px; }
+      .metric:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); }
+      .metric:nth-child(4) { border-top: 1px solid var(--line); }
+      .data-note { align-items: start; flex-direction: column; }
+      .data-schema { text-align: left; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#overview" aria-label="Auto Restoration Tracker home">
+        <span class="brand-mark" aria-hidden="true">G</span>
+        <span><span class="brand-name">Auto Restoration Tracker</span><span class="brand-caption">RESTORATION WORKSPACE</span></span>
+      </a>
+      <p class="side-label">Workspace</p>
+      <nav class="nav-list">
+        <a class="nav-item active" href="#overview" aria-current="page"><span class="nav-icon" aria-hidden="true">▦</span>Overview</a>
+        <a class="nav-item" href="#stages"><span class="nav-icon" aria-hidden="true">◷</span>Work stages</a>
+        <a class="nav-item" href="#parts"><span class="nav-icon" aria-hidden="true">▤</span>Parts &amp; costs<span class="nav-count">08</span></a>
+        <a class="nav-item" href="#actions"><span class="nav-icon" aria-hidden="true">☑</span>Next actions<span class="nav-count" id="action-count">03</span></a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="garage-note">
+          <strong>One project, all in one place.</strong>
+          <p>Keep the work, parts, and spending organized as the build moves forward.</p>
+        </div>
+        <a class="nav-item" href="#data-model"><span class="nav-icon" aria-hidden="true">⚙</span>Project setup</a>
+      </div>
+    </aside>
+
+    <main class="main" id="overview">
+      <header class="topbar">
+        <div class="breadcrumbs">My garage <span aria-hidden="true">/</span> <strong>Project overview</strong></div>
+        <div class="topbar-right"><span class="date-label">MON, SEP 28, 2026</span><span class="avatar" aria-label="Arlo Jolley">AJ</span></div>
+      </header>
+
+      <section class="page-heading" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Restoration project / 01</p>
+          <h1 id="page-title">Project overview</h1>
+          <p class="subtitle">A clear view of the work, parts, and budget.</p>
+        </div>
+        <button class="button" id="add-action" type="button"><span aria-hidden="true">+</span> Add next action</button>
+      </section>
+
+      <section class="vehicle-panel" aria-label="Featured restoration project">
+        <div class="vehicle-info">
+          <div class="vehicle-tag"><span class="status-dot" aria-hidden="true"></span> In progress</div>
+          <h2 class="vehicle-name">1967 Ford Mustang</h2>
+          <p class="vehicle-meta">289 V8 · Coupe · Started March 2026</p>
+          <div class="progress-block">
+            <div class="progress-top"><span>Overall restoration</span><strong id="progress-value">38%</strong></div>
+            <div class="progress-track" role="progressbar" aria-label="Overall restoration progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="38" id="progress-bar"><div class="progress-fill"></div></div>
+          </div>
+        </div>
+        <div class="vehicle-photo">
+          <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&amp;fit=crop&amp;w=1200&amp;q=85" alt="Classic sports car parked outdoors">
+        </div>
+      </section>
+
+      <section class="metrics" aria-label="Project totals">
+        <div class="metric"><div class="metric-label">Parts spend</div><div class="metric-value">$4,280</div><div class="metric-detail">of $12,000 parts budget</div></div>
+        <div class="metric"><div class="metric-label">Parts tracked</div><div class="metric-value">08</div><div class="metric-detail">3 installed · 2 ordered</div></div>
+        <div class="metric"><div class="metric-label">Work stages</div><div class="metric-value">03 <span style="color:#a3a69e;font-size:13px;font-weight:500">/ 07</span></div><div class="metric-detail">Engine &amp; drivetrain underway</div></div>
+        <div class="metric"><div class="metric-label">Open actions</div><div class="metric-value" id="open-actions-metric">03</div><div class="metric-detail">1 high priority</div></div>
+      </section>
+
+      <div class="content-grid">
+        <section class="panel" id="stages" aria-labelledby="stages-title">
+          <div class="panel-heading"><div><h2 class="panel-title" id="stages-title">Restoration stages</h2><p class="panel-subtitle">Current stage and overall sequence</p></div><a class="text-link" href="#stages">View plan&nbsp; →</a></div>
+          <div class="stage-list">
+            <div class="stage-row done"><span class="stage-marker" aria-hidden="true">✓</span><div><div class="stage-name">Assessment &amp; teardown</div><div class="stage-note">Completed · Mar 14</div></div><span class="stage-state">DONE</span></div>
+            <div class="stage-row done"><span class="stage-marker" aria-hidden="true">✓</span><div><div class="stage-name">Body &amp; paint</div><div class="stage-note">Completed · May 02</div></div><span class="stage-state">DONE</span></div>
+            <div class="stage-row current"><span class="stage-marker" aria-hidden="true">03</span><div><div class="stage-name">Engine &amp; drivetrain</div><div class="stage-note">In progress · 6 tasks</div></div><span class="stage-state">CURRENT</span></div>
+            <div class="stage-row"><span class="stage-marker" aria-hidden="true">04</span><div><div class="stage-name">Suspension &amp; brakes</div><div class="stage-note">Not started</div></div><span class="stage-state">UP NEXT</span></div>
+            <div class="stage-row"><span class="stage-marker" aria-hidden="true">05</span><div><div class="stage-name">Interior &amp; electrical</div><div class="stage-note">Not started</div></div><span class="stage-state">LATER</span></div>
+          </div>
+        </section>
+
+        <section class="panel" id="parts" aria-labelledby="parts-title">
+          <div class="panel-heading"><div><h2 class="panel-title" id="parts-title">Parts &amp; costs</h2><p class="panel-subtitle">Recent items · estimated and actual spend</p></div><a class="text-link" href="#parts">All parts&nbsp; →</a></div>
+          <table class="parts-table">
+            <thead><tr><th scope="col">Part</th><th scope="col">Status</th><th scope="col">Cost</th></tr></thead>
+            <tbody>
+              <tr><td><div class="part-name">Water pump</div><div class="part-category">Engine · actual</div></td><td><span class="pill installed">Installed</span></td><td class="part-cost">$189</td></tr>
+              <tr><td><div class="part-name">Radiator assembly</div><div class="part-category">Cooling · actual</div></td><td><span class="pill ordered">Ordered</span></td><td class="part-cost">$425</td></tr>
+              <tr><td><div class="part-name">Carburetor rebuild kit</div><div class="part-category">Fuel · estimated</div></td><td><span class="pill needed">Needed</span></td><td class="part-cost">$86</td></tr>
+              <tr><td><div class="part-name">Alternator</div><div class="part-category">Electrical · actual</div></td><td><span class="pill installed">Installed</span></td><td class="part-cost">$212</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="panel" id="actions" aria-labelledby="actions-title">
+          <div class="panel-heading"><div><h2 class="panel-title" id="actions-title">Next actions</h2><p class="panel-subtitle">A short, prioritized list for the build</p></div><span class="nav-count" id="action-panel-count">03 OPEN</span></div>
+          <div class="action-list" id="action-list">
+            <div class="action-row"><input type="checkbox" id="task-1"><div class="action-copy"><label for="task-1">Confirm radiator delivery date</label><small>Parts · Due Oct 02</small></div><span class="priority">HIGH</span></div>
+            <div class="action-row"><input type="checkbox" id="task-2"><div class="action-copy"><label for="task-2">Measure fan shroud clearance</label><small>Engine · Due Oct 05</small></div><span class="priority">MED</span></div>
+            <div class="action-row"><input type="checkbox" id="task-3"><div class="action-copy"><label for="task-3">Log compression test results</label><small>Engine · Due Oct 08</small></div><span class="priority">MED</span></div>
+          </div>
+        </section>
+
+        <section class="panel" id="data-model" aria-labelledby="data-title">
+          <div class="panel-heading"><div><h2 class="panel-title" id="data-title">Project records</h2><p class="panel-subtitle">A simple structure behind the dashboard</p></div></div>
+          <div class="stage-list">
+            <div class="stage-row"><span class="stage-marker" aria-hidden="true">01</span><div><div class="stage-name">Vehicle</div><div class="stage-note">Year · make · model · start date</div></div><span class="stage-state">1 RECORD</span></div>
+            <div class="stage-row"><span class="stage-marker" aria-hidden="true">02</span><div><div class="stage-name">Work stages</div><div class="stage-note">Name · status · dates · notes</div></div><span class="stage-state">07 RECORDS</span></div>
+            <div class="stage-row"><span class="stage-marker" aria-hidden="true">03</span><div><div class="stage-name">Parts &amp; costs</div><div class="stage-note">Part · quantity · status · cost</div></div><span class="stage-state">08 RECORDS</span></div>
+            <div class="stage-row"><span class="stage-marker" aria-hidden="true">04</span><div><div class="stage-name">Next actions</div><div class="stage-note">Task · priority · due date · status</div></div><span class="stage-state">03 OPEN</span></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="bottom-row"><div class="data-note"><span><strong>Sprint 1 design draft</strong> · Example project information shown for layout and data planning.</span><span class="data-schema">Vehicle → Stages · Parts · Actions</span></div></div>
+    </main>
+  </div>
+
+  <script>
+    const actionList = document.querySelector("#action-list");
+    const countLabel = document.querySelector("#action-count");
+    const openMetric = document.querySelector("#open-actions-metric");
+    const panelCount = document.querySelector("#action-panel-count");
+
+    function updateActionCounts() {
+      const openCount = actionList.querySelectorAll(".action-row:not(.completed)").length;
+      const formattedCount = String(openCount).padStart(2, "0");
+      countLabel.textContent = formattedCount;
+      openMetric.textContent = formattedCount;
+      panelCount.textContent = `${formattedCount} OPEN`;
+    }
+
+    actionList.addEventListener("change", (event) => {
+      if (event.target.matches('input[type="checkbox"]')) {
+        event.target.closest(".action-row").classList.toggle("completed", event.target.checked);
+        updateActionCounts();
+      }
+    });
+
+    document.querySelector("#add-action").addEventListener("click", () => {
+      const taskText = window.prompt("What needs to be done next?");
+      if (!taskText || !taskText.trim()) return;
+
+      const row = document.createElement("div");
+      row.className = "action-row";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = `task-${Date.now()}`;
+      const copy = document.createElement("div");
+      copy.className = "action-copy";
+      const label = document.createElement("label");
+      label.htmlFor = checkbox.id;
+      label.textContent = taskText.trim();
+      const detail = document.createElement("small");
+      detail.textContent = "General · No due date";
+      const priority = document.createElement("span");
+      priority.className = "priority";
+      priority.textContent = "MED";
+      copy.append(label, detail);
+      row.append(checkbox, copy, priority);
+      actionList.append(row);
+      updateActionCounts();
+    });
+
+    updateActionCounts();
+  </script>
+</body>
+</html>
